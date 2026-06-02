@@ -48,10 +48,19 @@ Singleton {
             ))
     )
     
-    readonly property var preppedNames: list.map(a => ({
-        name: Fuzzy.prepare(`${a.name} `),
-        entry: a
-    }))
+    readonly property var preppedNames: list.map(a => {
+        const baseName = a.name || "";
+
+        const cleanId = a.id || "";
+
+        const searchHaystack = `${baseName} ${cleanId}`;
+
+        return {
+            name: Fuzzy.prepare(searchHaystack),
+            entry: a,
+            rawHaystack: searchHaystack
+        }
+    })
 
     readonly property var preppedIcons: list.map(a => ({
         name: Fuzzy.prepare(`${a.icon} `),
@@ -60,9 +69,9 @@ Singleton {
 
     function fuzzyQuery(search: string): var { // Idk why list<DesktopEntry> doesn't work
         if (root.sloppySearch) {
-            const results = list.map(obj => ({
-                entry: obj,
-                score: Levendist.computeScore(obj.name.toLowerCase(), search.toLowerCase())
+            const results = preppedNames.map(obj => ({
+                entry: obj.entry,
+                score: Levendist.computeScore(obj.rawHaystack.toLowerCase(), search.toLowerCase())
             })).filter(item => item.score > root.scoreThreshold)
                 .sort((a, b) => b.score - a.score)
             return results
